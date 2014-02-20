@@ -6,6 +6,10 @@
 
 /*global window */
 /*global document */
+/*global localStorage */
+
+// Configuration Variables
+var gSupportsStorage = false;
 
 // General drawing variables
 var gCanvasElement;
@@ -286,6 +290,10 @@ function onClick(e) {
         //
         gPoints.push(clickedPoint);
     }
+    
+    if (gSupportsStorage) {
+        localStorage.setItem('points', JSON.stringify(gPoints));
+    }
 
     // Update computed geometry information (smallest enclosing disc, Delaunay
     // triangulation, or convex hull for example). These should involve calls out to
@@ -298,15 +306,31 @@ function onClick(e) {
 
 function init() {
     'use strict';
+    
+    var rawPoints,
+        isTouchDevice = window.hasOwnProperty('ontouchstart');
+    
+    // Detect if HTML5 Storage is supported
+    gSupportsStorage = window.hasOwnProperty('localStorage') && window.localStorage !== null;
+    
+    if (gSupportsStorage) {
+        rawPoints = localStorage.getItem('points');
+        if (rawPoints) {
+            gPoints = JSON.parse(rawPoints);
+            gMinDisc = minimumDisc(gPoints);
+        }
+    }
 
     // Initialize the drawing variables
     //
     gCanvasElement = document.getElementById("canvas");
+    gDrawingContext = gCanvasElement.getContext("2d");
+    
+    // Setup event listeners
+    //
     gCanvasElement.addEventListener("click", onClick, false);
     window.addEventListener("deviceorientation", draw(), false);
-    gDrawingContext = gCanvasElement.getContext("2d");
 
-    var isTouchDevice = window.hasOwnProperty('ontouchstart');
     if (isTouchDevice) {
         // Use a bigger point radius for touch screens as fingers are big and clumsy
         //

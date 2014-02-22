@@ -21,7 +21,22 @@ var gHeight;
 var gPoints = [];
 var gPointRadius = 4.0;
 
-var gMinDisc;
+var Algorithm = {
+    MIN_DISC : 0,
+    CONVEX_HULL : 1,
+    NUM_ALGORITHMS : 2
+};
+
+var TurnDirection = {
+    RIGHT_TURN : -1,
+    NO_TURN : 0,
+    LEFT_TURN : 1
+};
+
+var gCurrentAlgorithm;
+
+var gMinDisc = null;
+var gConvexHull = null;
 
 //----------------------------------------------------------------------------------------
 // Comparison Functions
@@ -46,7 +61,7 @@ function lessThanOrTolerablyEqual(a, b) {
 // Utility Functions
 //----------------------------------------------------------------------------------------
 
-function randomIndexLessThan(upperLimit) {
+function randomIntLessThan(upperLimit) {
     'use strict';
 
     return Math.floor((Math.random() * upperLimit));
@@ -55,22 +70,57 @@ function randomIndexLessThan(upperLimit) {
 function randomPermutation(elements) {
     'use strict';
 
-    var randomElements,
+    var randomElements = elements.slice(),
         i,
         j,
         temp;
 
-    randomElements = elements.slice();
-
     for (i = randomElements.length - 1; i > 0; i -= 1) {
 
-        j = randomIndexLessThan(i);
+        j = randomIntLessThan(i);
         temp = randomElements[i];
         randomElements[i] = randomElements[j];
         randomElements[j] = temp;
     }
 
     return randomElements;
+}
+
+function comparePoints(a, b) {
+    'use strict';
+    
+    if (a[0] !== b[0]) {
+        return a[0] - b[0];
+    } else {
+        return a[1] - b[1];
+    }
+}
+
+function lexicographicOrder(points) {
+    'use strict';
+    
+    var orderedPoints = points.slice(0);
+    
+    orderedPoints.sort(comparePoints);
+    
+    return orderedPoints;
+}
+
+function concat(a, b) {
+    'use strict';
+    
+    var result = null,
+        i;
+    
+    if (a && b) {
+        result = a.slice();
+        
+        for (i = 0; i < b.length; i += 1) {
+            result.push(b[i]);
+        }
+    }
+    
+    return result;
 }
 
 //----------------------------------------------------------------------------------------
@@ -84,6 +134,28 @@ function distance(p1, p2) {
         deltaY = p1[1] - p2[1];
 
     return Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+}
+
+function turnDirection(p1, p2, p3) {
+    'use strict';
+    
+    // The sign of the z-value of the cross product of the vectors (p2 -> p1) and
+    // (p2 -> p3) indicates the direction of the turn. As we are using a left-handed
+    // system, :
+    //      positive -> left turn
+    //      zero -> no turn
+    //      negative -> right turn
+    //
+    
+    var z = (p1[0] - p2[0]) * (p3[1] - p2[1]) - (p1[1] - p2[1]) * (p3[0] - p2[0]);
+    
+    if (tolerablyEqual(z, 0.0)) {
+        return TurnDirection.NO_TURN;
+    } else if (lessThanOrTolerablyEqual(z, 0.0)) {
+        return TurnDirection.RIGHT_TURN;
+    } else {
+        return TurnDirection.LEFT_TURN;
+    }
 }
 
 function twoPointDisc(p1, p2) {
@@ -100,6 +172,7 @@ function threePointDisc(p1, p2, p3) {
 
     // See http://en.wikipedia.org/wiki/Circumscribed_circle#Cartesian_coordinates
     // Didn't feel like working through the equations.
+    //
     var D = 2.0 * (p1[0] * (p2[1] - p3[1]) + p2[0] * (p3[1] - p1[1]) + p3[0] * (p1[1] - p2[1])),
         x = ((Math.pow(p1[0], 2) + Math.pow(p1[1], 2)) * (p2[1] - p3[1]) + (Math.pow(p2[0], 2) + Math.pow(p2[1], 2)) * (p3[1] - p1[1]) + (Math.pow(p3[0], 2) + Math.pow(p3[1], 2)) * (p1[1] - p2[1])) / D,
         y = ((Math.pow(p1[0], 2) + Math.pow(p1[1], 2)) * (p3[0] - p2[0]) + (Math.pow(p2[0], 2) + Math.pow(p2[1], 2)) * (p1[0] - p3[0]) + (Math.pow(p3[0], 2) + Math.pow(p3[1], 2)) * (p2[0] - p1[0])) / D,
@@ -113,6 +186,67 @@ function pointInDisc(p, disc) {
     'use strict';
 
     return lessThanOrTolerablyEqual(distance(disc[0], p), disc[1]);
+}
+
+//----------------------------------------------------------------------------------------
+// Convex Hull
+//----------------------------------------------------------------------------------------
+
+function halfConvexHull(points) {
+    'use strict';
+    
+    var halfHull = [],
+        i,
+        n;
+    
+    
+    halfHull.push(points[0]);
+    halfHull.push(points[1]);
+
+    for (i = 2; i < points.length; i += 1) {
+        halfHull.push(points[i]);
+
+        n = halfHull.length;
+        while (n > 2 && turnDirection(halfHull[n - 3], halfHull[n - 2], halfHull[n - 1]) !== TurnDirection.RIGHT_TURN) {
+            // Remove the middle of the last 3 points
+            //
+            halfHull.splice(n - 2, 1);
+
+            n = halfHull.length;
+        }
+    }
+    
+    return halfHull;
+}
+
+function convexHull(points) {
+    'use strict';
+    
+    var hull = null,
+        upperHull = [],
+        lowerHull = [],
+        orderedPoints;
+    
+    if (points && points.length > 2) {
+        // Compute the upper convex hull
+        //
+        orderedPoints = lexicographicOrder(points);
+        upperHull = halfConvexHull(orderedPoints);
+        
+        // Compute the lower convex hull
+        //
+        orderedPoints.reverse();
+        lowerHull = halfConvexHull(orderedPoints);
+        
+        // Combine the upper and lower vertices into a single convex hull (ignore the
+        // first point as this is the last point of the upper hull)
+        //
+        hull = upperHull;
+        lowerHull.splice(0, 1);
+        hull = concat(upperHull, lowerHull);
+    }
+
+    return hull;
 }
 
 //----------------------------------------------------------------------------------------
@@ -203,7 +337,28 @@ function drawPoint(point) {
     gDrawingContext.stroke();
     gDrawingContext.fillStyle = 'black';
     gDrawingContext.fill();
+}
 
+function drawLine(start, end) {
+    'use strict';
+    
+    // Draw a line connecting the start and end points
+    //
+    gDrawingContext.beginPath();
+    gDrawingContext.moveTo(start[0], start[1]);
+    gDrawingContext.lineTo(end[0], end[1]);
+    gDrawingContext.strokeStyle = 'black';
+    gDrawingContext.stroke();
+}
+
+function drawPolyLine(vertices) {
+    'use strict';
+    
+    var i;
+    
+    for (i = 0; i < vertices.length - 1; i += 1) {
+        drawLine(vertices[i], vertices[i + 1]);
+    }
 }
 
 function drawCircle(circle) {
@@ -240,6 +395,12 @@ function draw() {
     if (gMinDisc) {
         drawCircle(gMinDisc);
     }
+    
+    // Draw the convex hull (if it exists)
+    //
+    if (gConvexHull) {
+        drawPolyLine(gConvexHull);
+    }
 }
 
 function getClickedPoint(e) {
@@ -261,17 +422,14 @@ function getClickedPoint(e) {
     return [x, y];
 }
 
-function onClick(e) {
+function updatePointSet(clickedPoint) {
     'use strict';
-
-    // Find the clicked point in the list of points(if it exists)
-    //
-    var clickedPoint = getClickedPoint(e),
-        tolerance = 2 * gPointRadius,
+    
+    var tolerance = 2 * gPointRadius,
         pointIndex = -1,
         i,
         curPoint;
-
+    
     for (i = 0; i < gPoints.length; i += 1) {
         curPoint = [gPoints[i][0], gPoints[i][1]];
 
@@ -294,14 +452,42 @@ function onClick(e) {
     if (gSupportsStorage) {
         localStorage.setItem('points', JSON.stringify(gPoints));
     }
+}
 
+function updateDerivedGeometry() {
+    'use strict';
+    
     // Update computed geometry information (smallest enclosing disc, Delaunay
     // triangulation, or convex hull for example). These should involve calls out to
     // other javascript files which should be in a github repository.
+    switch (gCurrentAlgorithm) {
+    case Algorithm.MIN_DISC:
+        gMinDisc = minimumDisc(gPoints);
+        break;
+    case Algorithm.CONVEX_HULL:
+        gConvexHull = convexHull(gPoints);
+        break;
+    }
+}
+
+function onClick(e) {
+    'use strict';
+
+    // Find the clicked point in the list of points(if it exists)
     //
-    gMinDisc = minimumDisc(gPoints);
+    var clickedPoint = getClickedPoint(e);
+
+    updatePointSet(clickedPoint);
+    
+    updateDerivedGeometry();
 
     draw();
+}
+
+function randomAlgorithm() {
+    'use strict';
+    
+    return randomIntLessThan(Algorithm.NUM_ALGORITHMS);
 }
 
 function init() {
@@ -310,6 +496,10 @@ function init() {
     var rawPoints,
         isTouchDevice = window.hasOwnProperty('ontouchstart');
     
+    // Select an algorithm to use
+    //
+    gCurrentAlgorithm = randomAlgorithm();
+    
     // Detect if HTML5 Storage is supported
     gSupportsStorage = window.hasOwnProperty('localStorage') && window.localStorage !== null;
     
@@ -317,7 +507,7 @@ function init() {
         rawPoints = localStorage.getItem('points');
         if (rawPoints) {
             gPoints = JSON.parse(rawPoints);
-            gMinDisc = minimumDisc(gPoints);
+            updateDerivedGeometry();
         }
     }
 

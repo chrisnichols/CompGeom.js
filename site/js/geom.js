@@ -261,17 +261,14 @@ function getClickedPoint(e) {
     return [x, y];
 }
 
-function onClick(e) {
+function updatePointSet(clickedPoint) {
     'use strict';
-
-    // Find the clicked point in the list of points(if it exists)
-    //
-    var clickedPoint = getClickedPoint(e),
-        tolerance = 2 * gPointRadius,
+    
+    var tolerance = 2 * gPointRadius,
         pointIndex = -1,
         i,
         curPoint;
-
+    
     for (i = 0; i < gPoints.length; i += 1) {
         curPoint = [gPoints[i][0], gPoints[i][1]];
 
@@ -294,12 +291,28 @@ function onClick(e) {
     if (gSupportsStorage) {
         localStorage.setItem('points', JSON.stringify(gPoints));
     }
+}
 
+function updateDerivedGeometry() {
+    'use strict';
+    
     // Update computed geometry information (smallest enclosing disc, Delaunay
     // triangulation, or convex hull for example). These should involve calls out to
     // other javascript files which should be in a github repository.
     //
     gMinDisc = minimumDisc(gPoints);
+}
+
+function onClick(e) {
+    'use strict';
+
+    // Find the clicked point in the list of points(if it exists)
+    //
+    var clickedPoint = getClickedPoint(e);
+
+    updatePointSet(clickedPoint);
+    
+    updateDerivedGeometry();
 
     draw();
 }

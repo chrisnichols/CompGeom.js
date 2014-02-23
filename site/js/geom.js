@@ -490,6 +490,20 @@ function randomAlgorithm() {
     return randomIntLessThan(Algorithm.NUM_ALGORITHMS);
 }
 
+function supportsLocalStorage() {
+    'use strict';
+    
+    var t = "test";
+    
+    try {
+        window.localStorage.setItem(t, t);
+        window.localStorage.removeItem(t);
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
 function init() {
     'use strict';
     
@@ -501,7 +515,7 @@ function init() {
     gCurrentAlgorithm = randomAlgorithm();
     
     // Detect if HTML5 Storage is supported
-    gSupportsStorage = window.hasOwnProperty('localStorage') && window.localStorage !== null;
+    gSupportsStorage = supportsLocalStorage();
     
     if (gSupportsStorage) {
         rawPoints = localStorage.getItem('points');

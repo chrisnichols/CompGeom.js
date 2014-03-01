@@ -86,26 +86,6 @@ function randomPermutation(elements) {
     return randomElements;
 }
 
-function comparePoints(a, b) {
-    'use strict';
-    
-    if (a[0] !== b[0]) {
-        return a[0] - b[0];
-    } else {
-        return a[1] - b[1];
-    }
-}
-
-function lexicographicOrder(points) {
-    'use strict';
-    
-    var orderedPoints = points.slice(0);
-    
-    orderedPoints.sort(comparePoints);
-    
-    return orderedPoints;
-}
-
 function concat(a, b) {
     'use strict';
     
@@ -142,17 +122,33 @@ Point.prototype.distanceTo = function (point) {
     return Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 };
 
+Point.prototype.compare = function (point) {
+    'use strict';
+    
+    if (this.x !== point.x) {
+        return this.x - point.x;
+    } else {
+        return this.y - point.y;
+    }
+};
+
 //----------------------------------------------------------------------------------------
 // General Geometry Functions
 //----------------------------------------------------------------------------------------
-
-function distance(p1, p2) {
+function comparePoints(a, b) {
     'use strict';
+    
+    return a.compare(b);
+}
 
-    var deltaX = p1[0] - p2[0],
-        deltaY = p1[1] - p2[1];
-
-    return Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+function orderPoints(points) {
+    'use strict';
+    
+    var orderedPoints = points.slice(0);
+    
+    orderedPoints.sort(comparePoints);
+    
+    return orderedPoints;
 }
 
 function turnDirection(p1, p2, p3) {
@@ -166,7 +162,7 @@ function turnDirection(p1, p2, p3) {
     //      negative -> right turn
     //
     
-    var z = (p1[0] - p2[0]) * (p3[1] - p2[1]) - (p1[1] - p2[1]) * (p3[0] - p2[0]);
+    var z = (p1.x - p2.x) * (p3.y - p2.y) - (p1.y - p2.y) * (p3.x - p2.x);
     
     if (tolerablyEqual(z, 0.0)) {
         return TurnDirection.NO_TURN;
@@ -180,8 +176,8 @@ function turnDirection(p1, p2, p3) {
 function twoPointDisc(p1, p2) {
     'use strict';
 
-    var center = [(p1[0] + p2[0]) / 2.0, (p1[1] + p2[1]) / 2.0],
-        radius = distance(center, p1);
+    var center = new Point((p1.x + p2.x) / 2.0, (p1.y + p2.y) / 2.0),
+        radius = center.distanceTo(p1);
 
     return [center, radius];
 }
@@ -192,11 +188,11 @@ function threePointDisc(p1, p2, p3) {
     // See http://en.wikipedia.org/wiki/Circumscribed_circle#Cartesian_coordinates
     // Didn't feel like working through the equations.
     //
-    var D = 2.0 * (p1[0] * (p2[1] - p3[1]) + p2[0] * (p3[1] - p1[1]) + p3[0] * (p1[1] - p2[1])),
-        x = ((Math.pow(p1[0], 2) + Math.pow(p1[1], 2)) * (p2[1] - p3[1]) + (Math.pow(p2[0], 2) + Math.pow(p2[1], 2)) * (p3[1] - p1[1]) + (Math.pow(p3[0], 2) + Math.pow(p3[1], 2)) * (p1[1] - p2[1])) / D,
-        y = ((Math.pow(p1[0], 2) + Math.pow(p1[1], 2)) * (p3[0] - p2[0]) + (Math.pow(p2[0], 2) + Math.pow(p2[1], 2)) * (p1[0] - p3[0]) + (Math.pow(p3[0], 2) + Math.pow(p3[1], 2)) * (p2[0] - p1[0])) / D,
-        center = [x, y],
-        radius = distance(center, p1);
+    var D = 2.0 * (p1.x * (p2.y - p3.y) + p2.x * (p3.y - p1.y) + p3.x * (p1.y - p2.y)),
+        x = ((Math.pow(p1.x, 2) + Math.pow(p1.y, 2)) * (p2.y - p3.y) + (Math.pow(p2.x, 2) + Math.pow(p2.y, 2)) * (p3.y - p1.y) + (Math.pow(p3.x, 2) + Math.pow(p3.y, 2)) * (p1.y - p2.y)) / D,
+        y = ((Math.pow(p1.x, 2) + Math.pow(p1.y, 2)) * (p3.x - p2.x) + (Math.pow(p2.x, 2) + Math.pow(p2.y, 2)) * (p1.x - p3.x) + (Math.pow(p3.x, 2) + Math.pow(p3.y, 2)) * (p2.x - p1.x)) / D,
+        center = new Point(x, y),
+        radius = center.distanceTo(p1);
 
     return [center, radius];
 }
@@ -204,7 +200,7 @@ function threePointDisc(p1, p2, p3) {
 function pointInDisc(p, disc) {
     'use strict';
 
-    return lessThanOrTolerablyEqual(distance(disc[0], p), disc[1]);
+    return lessThanOrTolerablyEqual(disc[0].distanceTo(p), disc[1]);
 }
 
 //----------------------------------------------------------------------------------------
@@ -249,7 +245,7 @@ function convexHull(points) {
     if (points && points.length > 2) {
         // Compute the upper convex hull
         //
-        orderedPoints = lexicographicOrder(points);
+        orderedPoints = orderPoints(points);
         upperHull = halfConvexHull(orderedPoints);
         
         // Compute the lower convex hull
@@ -350,7 +346,7 @@ function drawPoint(point) {
     // Draw a single point as a filled circle at the point coordinates
     //
     gDrawingContext.beginPath();
-    gDrawingContext.arc(point[0], point[1], gPointRadius, 0, 2 * Math.PI, false);
+    gDrawingContext.arc(point.x, point.y, gPointRadius, 0, 2 * Math.PI, false);
     gDrawingContext.closePath();
     gDrawingContext.strokeStyle = 'black';
     gDrawingContext.stroke();
@@ -364,8 +360,8 @@ function drawLine(start, end) {
     // Draw a line connecting the start and end points
     //
     gDrawingContext.beginPath();
-    gDrawingContext.moveTo(start[0], start[1]);
-    gDrawingContext.lineTo(end[0], end[1]);
+    gDrawingContext.moveTo(start.x, start.y);
+    gDrawingContext.lineTo(end.x, end.y);
     gDrawingContext.strokeStyle = 'black';
     gDrawingContext.stroke();
 }
@@ -383,8 +379,8 @@ function drawPolyLine(vertices) {
 function drawCircle(circle) {
     'use strict';
 
-    var x = circle[0][0],
-        y = circle[0][1],
+    var x = circle[0].x,
+        y = circle[0].y,
         r = circle[1];
 
     // Draw a single point as a filled circle at the point coordinates
@@ -438,7 +434,7 @@ function getClickedPoint(e) {
     x -= gCanvasElement.offsetLeft;
     y -= gCanvasElement.offsetTop;
 
-    return [x, y];
+    return new Point(x, y);
 }
 
 function updatePointSet(clickedPoint) {
@@ -450,9 +446,7 @@ function updatePointSet(clickedPoint) {
         curPoint;
     
     for (i = 0; i < gPoints.length; i += 1) {
-        curPoint = [gPoints[i][0], gPoints[i][1]];
-
-        if (distance(curPoint, clickedPoint) <= tolerance) {
+        if (clickedPoint.distanceTo(gPoints[i]) <= tolerance) {
             pointIndex = i;
             break;
         }
@@ -513,6 +507,9 @@ function supportsLocalStorage() {
     'use strict';
     
     var t = "test";
+    
+    // Temporarily disable local storage until this can be fixed
+    return false;
     
     try {
         window.localStorage.setItem(t, t);

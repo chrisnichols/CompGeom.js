@@ -124,6 +124,25 @@ function concat(a, b) {
 }
 
 //----------------------------------------------------------------------------------------
+// Geometry Classes
+//----------------------------------------------------------------------------------------
+function Point(x, y) {
+    'use strict';
+    
+    this.x = x;
+    this.y = y;
+}
+
+Point.prototype.distanceTo = function (point) {
+    'use strict';
+    
+    var deltaX = this.x - point.x,
+        deltaY = this.y - point.y;
+
+    return Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+};
+
+//----------------------------------------------------------------------------------------
 // General Geometry Functions
 //----------------------------------------------------------------------------------------
 

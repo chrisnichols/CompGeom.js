@@ -206,7 +206,6 @@ function pointInDisc(p, disc) {
 //----------------------------------------------------------------------------------------
 // Convex Hull
 //----------------------------------------------------------------------------------------
-
 function halfConvexHull(points) {
     'use strict';
     
@@ -457,7 +456,7 @@ function updatePointSet(clickedPoint) {
         //
         gPoints.splice(i, 1);
     } else {
-        // Add a new point under the cursor (scaled to [0,1])
+        // Add the clicked point to the list
         //
         gPoints.push(clickedPoint);
     }

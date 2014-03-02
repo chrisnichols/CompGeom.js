@@ -132,6 +132,13 @@ Point.prototype.compare = function (point) {
     }
 };
 
+function Circle(center, radius) {
+    'use strict';
+    
+    this.center = center;
+    this.radius = radius;
+}
+
 //----------------------------------------------------------------------------------------
 // General Geometry Functions
 //----------------------------------------------------------------------------------------
@@ -179,7 +186,7 @@ function twoPointDisc(p1, p2) {
     var center = new Point((p1.x + p2.x) / 2.0, (p1.y + p2.y) / 2.0),
         radius = center.distanceTo(p1);
 
-    return [center, radius];
+    return new Circle(center, radius);
 }
 
 function threePointDisc(p1, p2, p3) {
@@ -194,13 +201,13 @@ function threePointDisc(p1, p2, p3) {
         center = new Point(x, y),
         radius = center.distanceTo(p1);
 
-    return [center, radius];
+    return new Circle(center, radius);
 }
 
 function pointInDisc(p, disc) {
     'use strict';
 
-    return lessThanOrTolerablyEqual(disc[0].distanceTo(p), disc[1]);
+    return lessThanOrTolerablyEqual(disc.center.distanceTo(p), disc.radius);
 }
 
 //----------------------------------------------------------------------------------------
@@ -378,9 +385,9 @@ function drawPolyLine(vertices) {
 function drawCircle(circle) {
     'use strict';
 
-    var x = circle[0].x,
-        y = circle[0].y,
-        r = circle[1];
+    var x = circle.center.x,
+        y = circle.center.y,
+        r = circle.radius;
 
     // Draw a single point as a filled circle at the point coordinates
     //

@@ -331,7 +331,7 @@ function minimumDisc(points) {
 }
 
 //----------------------------------------------------------------------------------------
-// UI Functions
+// Web-App
 //----------------------------------------------------------------------------------------
 
 function resize() {
@@ -443,6 +443,23 @@ function getClickedPoint(e) {
     return new Point(x, y);
 }
 
+function storePoints() {
+    'use strict';
+    
+    var pointArray = [],
+        i;
+    
+    if (gSupportsStorage) {
+        if (gPoints && gPoints.length > 0) {
+            for (i = 0; i < gPoints.length; i += 1) {
+                pointArray.push([gPoints[i].x, gPoints[i].y]);
+            }
+        }
+        
+        localStorage.setItem('points', JSON.stringify(pointArray));
+    }
+}
+
 function updatePointSet(clickedPoint) {
     'use strict';
     
@@ -468,9 +485,7 @@ function updatePointSet(clickedPoint) {
         gPoints.push(clickedPoint);
     }
     
-    if (gSupportsStorage) {
-        localStorage.setItem('points', JSON.stringify(gPoints));
-    }
+    storePoints();
 }
 
 function updateDerivedGeometry() {
@@ -513,16 +528,34 @@ function supportsLocalStorage() {
     'use strict';
     
     var t = "test";
-    
-    // Temporarily disable local storage until this can be fixed
-    return false;
-    
+        
     try {
         window.localStorage.setItem(t, t);
         window.localStorage.removeItem(t);
         return true;
     } catch (e) {
         return false;
+    }
+}
+
+function loadPoints() {
+    'use strict';
+    
+    var rawPoints,
+        pointArray,
+        i;
+    
+    if (gSupportsStorage) {
+        rawPoints = localStorage.getItem('points');
+    
+        if (rawPoints) {
+            pointArray = JSON.parse(rawPoints);
+            gPoints = [];
+            
+            for (i = 0; i < pointArray.length; i += 1) {
+                gPoints.push(new Point(pointArray[i][0], pointArray[i][1]));
+            }
+        }
     }
 }
 
@@ -539,13 +572,8 @@ function init() {
     // Detect if HTML5 Storage is supported
     gSupportsStorage = supportsLocalStorage();
     
-    if (gSupportsStorage) {
-        rawPoints = localStorage.getItem('points');
-        if (rawPoints) {
-            gPoints = JSON.parse(rawPoints);
-            updateDerivedGeometry();
-        }
-    }
+    loadPoints();
+    updateDerivedGeometry();
 
     // Initialize the drawing variables
     //

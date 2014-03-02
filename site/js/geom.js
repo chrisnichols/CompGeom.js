@@ -139,6 +139,12 @@ function Circle(center, radius) {
     this.radius = radius;
 }
 
+Circle.prototype.containsPoint = function (point) {
+    'use strict';
+
+    return lessThanOrTolerablyEqual(this.center.distanceTo(point), this.radius);
+};
+
 //----------------------------------------------------------------------------------------
 // General Geometry Functions
 //----------------------------------------------------------------------------------------
@@ -202,12 +208,6 @@ function threePointDisc(p1, p2, p3) {
         radius = center.distanceTo(p1);
 
     return new Circle(center, radius);
-}
-
-function pointInDisc(p, disc) {
-    'use strict';
-
-    return lessThanOrTolerablyEqual(disc.center.distanceTo(p), disc.radius);
 }
 
 //----------------------------------------------------------------------------------------
@@ -283,7 +283,7 @@ function minimumDiscWith2Points(points, p, q) {
     minDisc = twoPointDisc(p, q);
 
     for (i = 0; i < points.length; i += 1) {
-        if (!pointInDisc(points[i], minDisc)) {
+        if (!minDisc.containsPoint(points[i])) {
             minDisc = threePointDisc(points[i], p, q);
         }
     }
@@ -300,7 +300,7 @@ function minimumDiscWithPoint(points, p) {
     minDisc = twoPointDisc(points[0], p);
 
     for (i = 1; i < points.length; i += 1) {
-        if (!pointInDisc(points[i], minDisc)) {
+        if (!minDisc.containsPoint(points[i])) {
             minDisc = minimumDiscWith2Points(points.slice(0, i), points[i], p);
         }
     }
@@ -321,7 +321,7 @@ function minimumDisc(points) {
         minDisc = twoPointDisc(randomPoints[0], randomPoints[1]);
 
         for (i = 2; i < randomPoints.length; i += 1) {
-            if (!pointInDisc(randomPoints[i], minDisc)) {
+            if (!minDisc.containsPoint(randomPoints[i])) {
                 minDisc = minimumDiscWithPoint(randomPoints.slice(0, i), randomPoints[i]);
             }
         }

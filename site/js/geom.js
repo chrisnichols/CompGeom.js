@@ -524,6 +524,17 @@ function randomAlgorithm() {
     return randomIntLessThan(Algorithm.NUM_ALGORITHMS);
 }
 
+function supportsTouchEvents() {
+    'use strict';
+    
+    // Does not work for Android...
+    if (window.hasOwnProperty('ontouchstart')) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 function supportsLocalStorage() {
     'use strict';
     
@@ -563,7 +574,7 @@ function init() {
     'use strict';
     
     var rawPoints,
-        isTouchDevice = window.hasOwnProperty('ontouchstart');
+        isTouchDevice = supportsTouchEvents();
     
     // Select an algorithm to use
     //

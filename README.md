@@ -1,4 +1,4 @@
-jsCompGeom
-==========
+Geometry.js
+===========
 
-Computational Geometry algorithms implemented in JavaScript
+JavaScript computational geometry algorithms and data structures.

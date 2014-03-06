@@ -1,4 +1,4 @@
-Geometry.js
+CompGeom.js
 ===========
 
-JavaScript computational geometry algorithms and data structures.
+Computational geometry algorithms and data structures for JavaScript.

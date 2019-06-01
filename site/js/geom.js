@@ -22,15 +22,15 @@ var gPoints = [];
 var gPointRadius = 4.0;
 
 var Algorithm = {
-    MIN_DISC : 0,
-    CONVEX_HULL : 1,
-    NUM_ALGORITHMS : 2
+    MIN_DISC: 0,
+    CONVEX_HULL: 1,
+    NUM_ALGORITHMS: 2
 };
 
 var TurnDirection = {
-    RIGHT_TURN : -1,
-    NO_TURN : 0,
-    LEFT_TURN : 1
+    RIGHT_TURN: -1,
+    NO_TURN: 0,
+    LEFT_TURN: 1
 };
 
 var gCurrentAlgorithm;
@@ -88,18 +88,18 @@ function randomPermutation(elements) {
 
 function concat(a, b) {
     'use strict';
-    
+
     var result = null,
         i;
-    
+
     if (a && b) {
         result = a.slice();
-        
+
         for (i = 0; i < b.length; i += 1) {
             result.push(b[i]);
         }
     }
-    
+
     return result;
 }
 
@@ -108,14 +108,14 @@ function concat(a, b) {
 //----------------------------------------------------------------------------------------
 function Point(x, y) {
     'use strict';
-    
+
     this.x = x;
     this.y = y;
 }
 
 Point.prototype.distanceTo = function (point) {
     'use strict';
-    
+
     var deltaX = this.x - point.x,
         deltaY = this.y - point.y;
 
@@ -124,7 +124,7 @@ Point.prototype.distanceTo = function (point) {
 
 Point.prototype.compare = function (point) {
     'use strict';
-    
+
     if (this.x !== point.x) {
         return this.x - point.x;
     } else {
@@ -134,7 +134,7 @@ Point.prototype.compare = function (point) {
 
 function Circle(center, radius) {
     'use strict';
-    
+
     this.center = center;
     this.radius = radius;
 }
@@ -150,23 +150,23 @@ Circle.prototype.containsPoint = function (point) {
 //----------------------------------------------------------------------------------------
 function comparePoints(a, b) {
     'use strict';
-    
+
     return a.compare(b);
 }
 
 function orderPoints(points) {
     'use strict';
-    
+
     var orderedPoints = points.slice(0);
-    
+
     orderedPoints.sort(comparePoints);
-    
+
     return orderedPoints;
 }
 
 function turnDirection(p1, p2, p3) {
     'use strict';
-    
+
     // The sign of the z-value of the cross product of the vectors (p2 -> p1) and
     // (p2 -> p3) indicates the direction of the turn. As we are using a left-handed
     // system, :
@@ -174,9 +174,9 @@ function turnDirection(p1, p2, p3) {
     //      zero -> no turn
     //      negative -> right turn
     //
-    
+
     var z = (p1.x - p2.x) * (p3.y - p2.y) - (p1.y - p2.y) * (p3.x - p2.x);
-    
+
     if (tolerablyEqual(z, 0.0)) {
         return TurnDirection.NO_TURN;
     } else if (lessThanOrTolerablyEqual(z, 0.0)) {
@@ -215,12 +215,12 @@ function threePointDisc(p1, p2, p3) {
 //----------------------------------------------------------------------------------------
 function halfConvexHull(points) {
     'use strict';
-    
+
     var halfHull = [],
         i,
         n;
-    
-    
+
+
     halfHull.push(points[0]);
     halfHull.push(points[1]);
 
@@ -236,29 +236,29 @@ function halfConvexHull(points) {
             n = halfHull.length;
         }
     }
-    
+
     return halfHull;
 }
 
 function convexHull(points) {
     'use strict';
-    
+
     var hull = null,
         upperHull = [],
         lowerHull = [],
         orderedPoints;
-    
+
     if (points && points.length > 2) {
         // Compute the upper convex hull
         //
         orderedPoints = orderPoints(points);
         upperHull = halfConvexHull(orderedPoints);
-        
+
         // Compute the lower convex hull
         //
         orderedPoints.reverse();
         lowerHull = halfConvexHull(orderedPoints);
-        
+
         // Combine the upper and lower vertices into a single convex hull (ignore the
         // first point as this is the last point of the upper hull)
         //
@@ -343,7 +343,11 @@ function resize() {
     gHeight = window.innerHeight;
 
     gCanvasElement.width = gWidth;
-    gCanvasElement.height = gHeight;
+
+    // Keep the height of the canvas reasonable.
+    // TODO: Find a way to make this fill the screen given the text above
+    //
+    gCanvasElement.height = gHeight * 0.6;
 }
 
 function drawPoint(point) {
@@ -362,7 +366,7 @@ function drawPoint(point) {
 
 function drawLine(start, end) {
     'use strict';
-    
+
     // Draw a line connecting the start and end points
     //
     gDrawingContext.beginPath();
@@ -374,9 +378,9 @@ function drawLine(start, end) {
 
 function drawPolyLine(vertices) {
     'use strict';
-    
+
     var i;
-    
+
     for (i = 0; i < vertices.length - 1; i += 1) {
         drawLine(vertices[i], vertices[i + 1]);
     }
@@ -416,7 +420,7 @@ function draw() {
     if (gMinDisc) {
         drawCircle(gMinDisc);
     }
-    
+
     // Draw the convex hull (if it exists)
     //
     if (gConvexHull) {
@@ -430,11 +434,11 @@ function getClickedPoint(e) {
     var x, y;
 
     if (e.pageX !== undefined && e.pageY !== undefined) {
-	    x = e.pageX;
-	    y = e.pageY;
+        x = e.pageX;
+        y = e.pageY;
     } else {
-	    x = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
-	    y = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
+        x = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
+        y = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
     }
 
     x -= gCanvasElement.offsetLeft;
@@ -445,29 +449,29 @@ function getClickedPoint(e) {
 
 function storePoints() {
     'use strict';
-    
+
     var pointArray = [],
         i;
-    
+
     if (gSupportsStorage) {
         if (gPoints && gPoints.length > 0) {
             for (i = 0; i < gPoints.length; i += 1) {
                 pointArray.push([gPoints[i].x, gPoints[i].y]);
             }
         }
-        
+
         localStorage.setItem('points', JSON.stringify(pointArray));
     }
 }
 
 function updatePointSet(clickedPoint) {
     'use strict';
-    
+
     var tolerance = 2 * gPointRadius,
         pointIndex = -1,
         i,
         curPoint;
-    
+
     for (i = 0; i < gPoints.length; i += 1) {
         if (clickedPoint.distanceTo(gPoints[i]) <= tolerance) {
             pointIndex = i;
@@ -484,23 +488,23 @@ function updatePointSet(clickedPoint) {
         //
         gPoints.push(clickedPoint);
     }
-    
+
     storePoints();
 }
 
 function updateDerivedGeometry() {
     'use strict';
-    
+
     // Update computed geometry information (smallest enclosing disc, Delaunay
     // triangulation, or convex hull for example). These should involve calls out to
     // other javascript files which should be in a github repository.
     switch (gCurrentAlgorithm) {
-    case Algorithm.MIN_DISC:
-        gMinDisc = minimumDisc(gPoints);
-        break;
-    case Algorithm.CONVEX_HULL:
-        gConvexHull = convexHull(gPoints);
-        break;
+        case Algorithm.MIN_DISC:
+            gMinDisc = minimumDisc(gPoints);
+            break;
+        case Algorithm.CONVEX_HULL:
+            gConvexHull = convexHull(gPoints);
+            break;
     }
 }
 
@@ -512,7 +516,7 @@ function onClick(e) {
     var clickedPoint = getClickedPoint(e);
 
     updatePointSet(clickedPoint);
-    
+
     updateDerivedGeometry();
 
     draw();
@@ -520,13 +524,13 @@ function onClick(e) {
 
 function randomAlgorithm() {
     'use strict';
-    
+
     return randomIntLessThan(Algorithm.NUM_ALGORITHMS);
 }
 
 function supportsTouchEvents() {
     'use strict';
-    
+
     // Does not work for Android...
     if (window.hasOwnProperty('ontouchstart')) {
         return true;
@@ -537,9 +541,9 @@ function supportsTouchEvents() {
 
 function supportsLocalStorage() {
     'use strict';
-    
+
     var t = "test";
-        
+
     try {
         window.localStorage.setItem(t, t);
         window.localStorage.removeItem(t);
@@ -551,18 +555,18 @@ function supportsLocalStorage() {
 
 function loadPoints() {
     'use strict';
-    
+
     var rawPoints,
         pointArray,
         i;
-    
+
     if (gSupportsStorage) {
         rawPoints = localStorage.getItem('points');
-    
+
         if (rawPoints) {
             pointArray = JSON.parse(rawPoints);
             gPoints = [];
-            
+
             for (i = 0; i < pointArray.length; i += 1) {
                 gPoints.push(new Point(pointArray[i][0], pointArray[i][1]));
             }
@@ -572,17 +576,17 @@ function loadPoints() {
 
 function init() {
     'use strict';
-    
+
     var rawPoints,
         isTouchDevice = supportsTouchEvents();
-    
+
     // Select an algorithm to use
     //
     gCurrentAlgorithm = randomAlgorithm();
-    
+
     // Detect if HTML5 Storage is supported
     gSupportsStorage = supportsLocalStorage();
-    
+
     loadPoints();
     updateDerivedGeometry();
 
@@ -590,7 +594,7 @@ function init() {
     //
     gCanvasElement = document.getElementById("canvas");
     gDrawingContext = gCanvasElement.getContext("2d");
-    
+
     // Setup event listeners
     //
     gCanvasElement.addEventListener("click", onClick, false);
